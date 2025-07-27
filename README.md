@@ -51,14 +51,13 @@ This platform leverages multiple AI models (Gemini, GPT-4, Claude, etc.) through
   - 🔄 **Omnipod** (Omnipod API) - Planned
 
 ### Medical Technology SDK
-- **SOLID Principles**: Clean, modular, and maintainable code architecture
-- **Security First**: Built-in sensitive data masking and secure communication
-- **Audit Logging**: Comprehensive logging for medical compliance
-- **Error Handling**: Robust error handling for medical-grade reliability
-- **Type Safety**: Full type hints and runtime type checking
-- **API Versioning**: Support for multiple API versions
-- **Regional Compliance**: Built-in regional server support
-- **Interactive Analysis**: Real-time glucose data analysis with AI insights
+- **CGM Device Integration**: Direct API connectivity for Abbott FreeStyle Libre, LibreView, and LibreLinkUp systems
+- **Medical Data Security**: HIPAA-compliant data handling with encryption, secure transmission, and audit trails
+- **Real-time Glucose Monitoring**: Live CGM data streaming with automated alerts and threshold management
+- **Multi-Regional Compliance**: EU/US healthcare regulations support with data sovereignty and regional endpoints
+- **Patient Connection Management**: Secure patient linking, data sharing, and caregiver access controls
+- **Medical-Grade Error Handling**: Fault-tolerant design with graceful degradation for critical healthcare applications
+- **Clinical Data Export**: Standardized glucose data formats for healthcare provider integration and analysis
 
 ## Repository Structure
 
@@ -214,7 +213,7 @@ glucose_data = client.get_connection_graph(connection_id)
 1. Clone the repository:
 ```bash
 git clone https://github.com/haseeb-heaven/glucose-gpt
-cd LibreViewApp
+cd glucose-gpt
 ```
 
 2. Create a virtual environment (recommended):
@@ -278,13 +277,9 @@ streamlit run glucosegpt/examples/glucose_chat.py
 ### Features Available in the Chat App
 
 The Streamlit chat application provides:
-   - **Pre-Launch Testing**: Comprehensive test suite runs automatically before app start
-   - **Error Notifications**: Clear notifications if tests fail with actionable guidance
-   - **System Validation**: Ensures all components are working before user interaction
    - **AI-Powered Analysis**: Interactive glucose data analysis using multiple AI models
    - **Multiple AI Models**: Choose from Gemini, GPT-4, Claude, and more
    - **Real-time Visualization**: Interactive charts and data visualization
-   - **Pattern Recognition**: AI identifies trends and anomalies
    - **Smart Insights**: Get personalized glucose management recommendations
    - **Export Capabilities**: Download reports and analyses
 
@@ -298,7 +293,8 @@ The Streamlit chat application provides:
 
 1. For programmatic access:
 ```bash
-python main.py
+python glucosegpt/clients/libre_view.py
+python glucosegpt/clients/libre_link_up.py
 ```
 
 2. The SDK provides:
