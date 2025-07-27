@@ -96,7 +96,7 @@ Enhanced CodeRunner Test Suite
 
 ## 🎯 Integration Ready
 
-The enhanced CodeRunner is now ready for integration into the LibreApp glucose monitoring application. It provides:
+The enhanced CodeRunner is now ready for integration into the Glucose-GPT glucose monitoring application. It provides:
 
 1. **Automatic Code Detection**: No manual intervention needed
 2. **Multi-Format Support**: Handles all common data science outputs
@@ -109,7 +109,7 @@ The system will automatically detect when LLM responses contain code, execute th
 
 ## 🚀 Next Steps
 
-The enhanced CodeRunner can now be integrated into GlucoseGPT to provide:
+The enhanced CodeRunner can now be integrated into Glucose-GPT to provide:
 - Automatic execution of AI-generated data analysis code
 - Interactive display of glucose trend analysis
 - Statistical summaries and visualizations

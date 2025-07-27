@@ -327,7 +327,7 @@ def test_complete_workflow_integration():
 
 def run_integration_tests():
     """Run all integration tests."""
-    print("🧪 Running LibreChat Integration Tests")
+    print("🧪 Running Glucose-GPT Integration Tests")
     print("=" * 60)
     
     try:

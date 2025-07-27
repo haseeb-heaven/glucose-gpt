@@ -52,7 +52,7 @@ The library provides two different client implementations for different use case
 ### 1. LibreCGMClient
 For direct integration with LibreView CGM devices:
 ```python
-from libreapp import LibreCGMClient, ApiConfig
+from glucosegpt import LibreCGMClient, ApiConfig
 
 # Create configuration (optional, has defaults)
 config = ApiConfig(
@@ -150,7 +150,7 @@ config = client.get_country_config(country_code)
 ### 2. LibreLinkUpClient
 For integration with LibreLinkUp sharing service:
 ```python
-from libreapp import LibreLinkUpClient, LibreLinkUpConfig
+from glucosegpt import LibreLinkUpClient, LibreLinkUpConfig
 
 # Create configuration
 config = LibreLinkUpConfig(
@@ -243,7 +243,7 @@ This will install all required packages:
 
 1. Start the Streamlit interface:
 ```bash
-streamlit run libreapp/examples/libre_chat.py
+streamlit run glucosegpt/examples/glucose_chat.py
 ```
 
 2. The chat application provides:
@@ -270,7 +270,7 @@ python main.py
 
 3. Logs and Monitoring:
    - Console: Real-time progress and status
-   - `logs/libreapp_YYYYMMDD.log`: Detailed debug information
+   - `logs/glucose_gpt_YYYYMMDD.log`: Detailed debug information
    - AI Analysis logs: Model interactions and responses
 
 ## API Documentation
@@ -309,7 +309,7 @@ python -m pytest tests/test_libre_chat_simple.py -v
 python -m pytest tests/test_libre_chat_integration.py -v
 
 # Run all tests with coverage
-python -m pytest tests/ --cov=libreapp --cov-report=html
+python -m pytest tests/ --cov=glucosegpt --cov-report=html
 
 # Use the custom test runner
 python run_tests.py
@@ -338,12 +338,12 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 
 ## AI Chat Application
 
-LibreChat provides an intelligent interface for glucose monitoring analysis:
+Glucose-GPT provides an intelligent interface for glucose monitoring analysis:
 
 ### Quick Start
 ```bash
 # Run the AI Chat application
-streamlit run libreapp/examples/libre_chat.py
+streamlit run glucosegpt/examples/glucose_chat.py
 ```
 
 ### Screenshots
@@ -351,12 +351,12 @@ streamlit run libreapp/examples/libre_chat.py
 #### Streamlit Interface
 The main interface provides an intuitive web-based experience for glucose data analysis:
 
-![LibreApp Streamlit Interface](resources/libreapp_streamlit_interface.png)
+![Glucose-GPT Streamlit Interface](resources/glucose_gpt_streamlit_interface.png)
 
 #### AI-Powered Analysis
 Advanced AI analysis with multiple model support and interactive visualizations:
 
-![LibreApp AI Analysis](resources/libreapp_ai_analysis.png)
+![Glucose-GPT AI Analysis](resources/glucose_gpt_ai_analysis.png)
 
 ### Features
 - **Multiple AI Models**:

@@ -1,4 +1,4 @@
-# Testing Guide for LibreApp
+# Testing Guide for Glucose-GPT
 
 ## 🚀 Quick Start
 
@@ -14,7 +14,7 @@ python -m pytest tests/test_libre_chat_simple.py -v
 
 ### Run Tests with Coverage
 ```bash
-python -m pytest tests/ --cov=libreapp --cov-report=html
+python -m pytest tests/ --cov=glucosegpt --cov-report=html
 ```
 
 ## 📁 Test Structure
@@ -65,7 +65,7 @@ pip install pytest pytest-cov pytest-mock pytest-asyncio xmltodict
 
 ### Successful Test Run
 ```
-🧪 Running LibreChat Unit Tests
+🧪 Running Glucose-GPT Unit Tests
 ==================================================
 ✅ Environment validation tests passed
 ✅ API key validation tests passed

@@ -1,5 +1,5 @@
 """
-Shared test fixtures and configuration for LibreApp tests.
+Shared test fixtures and configuration for Glucose-GPT tests.
 """
 import pytest
 import os

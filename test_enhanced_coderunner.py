@@ -6,7 +6,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from libreapp.utils.code_runner import CodeRunner
+from glucosegpt.utils.code_runner import CodeRunner
 import pandas as pd
 import numpy as np
 

@@ -339,7 +339,7 @@ def test_date_filtering():
 
 def run_all_tests():
     """Run all test functions."""
-    print("🧪 Running LibreChat Unit Tests")
+    print("🧪 Running Glucose-GPT Unit Tests")
     print("=" * 50)
     
     try:

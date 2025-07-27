@@ -15,7 +15,7 @@ def test_with_pytest():
     """Run tests using pytest."""
     import subprocess
     
-    print("🧪 Running LibreChat Tests with pytest")
+    print("🧪 Running Glucose-GPT Tests with pytest")
     print("=" * 50)
     
     # Run simple tests first

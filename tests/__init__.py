@@ -1,1 +1,1 @@
-# Tests package for LibreApp
+# Tests package for Glucose-GPT
