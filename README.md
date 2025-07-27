@@ -1,5 +1,17 @@
 # Glucose-GPT - AI-Powered Glucose Monitoring Platform & SDK
 
+## Screenshots
+
+### Streamlit Interface
+![Glucose-GPT Streamlit Interface](resources/glucose_gpt_streamlit_interface.png)
+*The main Streamlit chat interface showing AI-powered glucose data analysis with interactive visualizations*
+
+### AI Analysis Dashboard
+![Glucose-GPT AI Analysis](resources/glucose_gpt_ai_analysis.png)
+*Advanced AI analysis dashboard displaying glucose patterns, trends, and personalized insights*
+
+## Overview
+
 A dual-purpose solution combining:
 1. An intelligent chat application for glucose monitoring analysis using multiple AI models
 2. A professional SDK for LibreView CGM system integration
@@ -331,10 +343,10 @@ You can also run tests manually using:
 
 ```bash
 # Run all simple unit tests
-python -m pytest tests/test_libre_chat_simple.py -v
+python -m pytest tests/test_glucose_chat_simple.py -v
 
 # Run integration tests (requires more setup)
-python -m pytest tests/test_libre_chat_integration.py -v
+python -m pytest tests/test_glucose_chat_integration.py -v
 
 # Run API client tests
 python -m pytest tests/test_api_clients.py -v
@@ -342,25 +354,6 @@ python -m pytest tests/test_api_clients.py -v
 # Run all tests with coverage
 python -m pytest tests/ --cov=glucosegpt --cov-report=html
 ```
-
-### Test Coverage
-- **Comprehensive Pre-Launch Testing**: Automated test suite runs before app launch
-- **API Tests**: 17 comprehensive API client tests with authentication, data retrieval, and error handling
-- **Unit Tests**: 8 core functionality tests without external dependencies
-- **Integration Tests**: 6 full workflow tests with mocked external services
-- **Data Processing**: Glucose data analysis and transformation validation
-- **AI Integration**: LLM interaction and code execution testing
-- **Error Handling**: Comprehensive error scenarios and edge cases
-- **Regional Support**: Multi-region API endpoint testing
-- **Security**: Data masking and sensitive information protection
-- **Failure Prevention**: App startup blocked if critical tests fail
-- **Real-time Notifications**: Streamlit notifications for test results and failures
-
-**Test Results**: All 31 pre-launch tests passing (63 total test cases)
-- ✅ API Tests: 17/17 passing
-- ✅ Unit Tests: 8/8 passing  
-- ✅ Integration Tests: 6/6 passing
-- ✅ System Status: All components functional and ready for deployment
 
 See `TESTING.md` and `DEVELOPMENT.md` for detailed testing documentation.
 
