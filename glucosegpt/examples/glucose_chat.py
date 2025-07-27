@@ -153,6 +153,8 @@ class LibreClientManager:
 			return False
 
 	def get_patient_data(self, patient_id: str) -> Optional[List[Dict[str, Any]]]:
+		import re
+		
 		try:
 			self.file_log.info(f"Fetching glucose data for patient: {patient_id}")
 			
@@ -166,15 +168,107 @@ class LibreClientManager:
 			# Log response structure
 			data = graph_data.get('data', {})
 			graph_readings = data.get('graphData', [])
-			self.file_log.info(f"Retrieved {len(graph_readings)} glucose readings")
+			self.file_log.info(f"Retrieved {len(graph_readings)} glucose readings from API")
 			
-			if graph_readings:
-				first_reading = graph_readings[0] if len(graph_readings) > 0 else {}
-				last_reading = graph_readings[-1] if len(graph_readings) > 0 else {}
+			# Enhanced validation with regex for glucose values and timestamps
+			self.file_log.info(f"=== API GLUCOSE DATA VALIDATION WITH REGEX ===")
+			
+			# Regex patterns for validation
+			glucose_pattern = re.compile(r'^\d{1,9}(\.\d+)?$')  # 1-9 digits with optional decimal
+			# Support both ISO format and LibreView API format
+			timestamp_pattern_iso = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}')  # ISO format: 2024-01-01T10:00:00
+			timestamp_pattern_us = re.compile(r'^\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2} (AM|PM)$')  # US format: 7/27/2025 5:46:35 PM
+			
+			api_validation_counts = {
+				'total_api_readings': len(graph_readings),
+				'valid_glucose_format': 0,
+				'valid_timestamp_format': 0,
+				'valid_glucose_range': 0,
+				'api_extraction_success': 0
+			}
+			
+			validated_readings = []
+			api_glucose_values = []
+			api_timestamps = []
+			
+			for i, reading in enumerate(graph_readings):
+				self.file_log.debug(f"API reading {i+1}: {reading}")
+				
+				glucose_str = str(reading.get('Value', '')).strip()
+				timestamp_str = str(reading.get('Timestamp', '')).strip()
+				
+				# Handle both string and numeric glucose values
+				try:
+					glucose_numeric = float(glucose_str)
+					glucose_validation_str = str(int(glucose_numeric)) if glucose_numeric == int(glucose_numeric) else str(glucose_numeric)
+				except (ValueError, TypeError):
+					self.file_log.warning(f"❌ Invalid glucose value from API (not numeric): '{glucose_str}'")
+					continue
+				
+				# Validate glucose value with regex (1-9 digits with optional decimal)
+				glucose_valid = glucose_pattern.match(glucose_validation_str)
+				if glucose_valid:
+					api_validation_counts['valid_glucose_format'] += 1
+					self.file_log.debug(f"✅ Valid glucose format from API: {glucose_str}")
+				else:
+					self.file_log.warning(f"❌ Invalid glucose format from API: '{glucose_str}' (not 1-9 digits)")
+					continue
+				
+				# Validate timestamp format (support both ISO and US formats)
+				timestamp_valid = timestamp_pattern_iso.match(timestamp_str) or timestamp_pattern_us.match(timestamp_str)
+				if timestamp_valid:
+					api_validation_counts['valid_timestamp_format'] += 1
+					self.file_log.debug(f"✅ Valid timestamp format from API: {timestamp_str}")
+				else:
+					self.file_log.warning(f"❌ Invalid timestamp format from API: '{timestamp_str}' (expected ISO or US format)")
+					continue  # Skip this reading
+				
+				# Additional range validation for glucose
+				try:
+					if 20 <= glucose_numeric <= 600:  # Typical glucose range
+						api_validation_counts['valid_glucose_range'] += 1
+						api_validation_counts['api_extraction_success'] += 1
+						
+						# Store only essential data: glucose value and timestamp
+						validated_reading = {
+							'Value': glucose_numeric,  # Store as numeric for compatibility
+							'Timestamp': timestamp_str
+						}
+						validated_readings.append(validated_reading)
+						api_glucose_values.append(glucose_str)
+						api_timestamps.append(timestamp_str)
+						
+						self.file_log.debug(f"✅ API reading validated: {glucose_numeric} mg/dL at {timestamp_str}")
+					else:
+						self.file_log.warning(f"❌ Glucose value out of range from API: {glucose_numeric} (expected 20-600 mg/dL)")
+				except (ValueError, TypeError) as e:
+					self.file_log.warning(f"❌ Failed to process API glucose value '{glucose_str}': {e}")
+			
+			# Log comprehensive API validation summary
+			success_rate = (api_validation_counts['api_extraction_success'] / api_validation_counts['total_api_readings'] * 100) if api_validation_counts['total_api_readings'] > 0 else 0
+			
+			self.file_log.info(f"=== API VALIDATION SUMMARY ===")
+			self.file_log.info(f"Total API readings: {api_validation_counts['total_api_readings']}")
+			self.file_log.info(f"Valid glucose format (1-9 digits): {api_validation_counts['valid_glucose_format']}")
+			self.file_log.info(f"Valid timestamp format: {api_validation_counts['valid_timestamp_format']}")
+			self.file_log.info(f"Valid glucose range (20-600): {api_validation_counts['valid_glucose_range']}")
+			self.file_log.info(f"Successfully extracted: {api_validation_counts['api_extraction_success']}")
+			self.file_log.info(f"API extraction success rate: {success_rate:.1f}%")
+			self.file_log.info(f"API glucose values (count: {len(api_glucose_values)}): {api_glucose_values}")
+			self.file_log.info(f"API timestamps (count: {len(api_timestamps)}): {api_timestamps[:3]}{'...' if len(api_timestamps) > 3 else ''}")
+			
+			if validated_readings:
+				first_reading = validated_readings[0]
+				last_reading = validated_readings[-1]
 				self.file_log.info(f"Data range - First: {first_reading.get('Timestamp', 'N/A')}, "
 								 f"Last: {last_reading.get('Timestamp', 'N/A')}")
-			
-			return graph_readings
+				
+				# Return validated readings with only glucose and timestamp
+				return validated_readings
+			else:
+				self.file_log.warning("No valid glucose readings found after API validation")
+				return []
+				
 		except Exception as data_error:
 			error_msg = f"Failed to fetch glucose data for patient {patient_id}: {str(data_error)}"
 			st.toast(error_msg, icon="❌")
@@ -187,6 +281,54 @@ class DataFormatter:
 						low_threshold: float, 
 						high_threshold: float,
 						date_range: Optional[Dict[str, str]] = None) -> List[Dict[str, Any]]:
+		import re
+		from datetime import datetime
+		
+		# Enhanced data processing with regex validation
+		file_log.info(f"=== DATA PROCESSING WITH REGEX VALIDATION ===")
+		file_log.info(f"Processing {len(readings)} raw readings")
+		
+		# Regex patterns for validation
+		glucose_pattern = re.compile(r'^\d{1,9}(\.\d+)?$')  # 1-9 digits with optional decimal
+		# Support both ISO format and LibreView API format
+		timestamp_pattern_iso = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}')  # ISO format: 2024-01-01T10:00:00
+		timestamp_pattern_us = re.compile(r'^\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2} (AM|PM)$')  # US format: 7/27/2025 5:46:35 PM
+		
+		input_validation_counts = {
+			'total_input': len(readings),
+			'valid_glucose_format': 0,
+			'valid_timestamp_format': 0,
+			'valid_glucose_range': 0,
+			'duplicate_timestamps': 0,
+			'processed_successfully': 0
+		}
+		
+		# Log all input values for validation
+		input_values = []
+		for i, reading in enumerate(readings):
+			glucose_str = str(reading.get('Value', '')).strip()
+			timestamp_str = str(reading.get('Timestamp', '')).strip()
+			input_values.append(glucose_str)
+			
+			file_log.debug(f"Input reading {i+1}: Glucose='{glucose_str}', Timestamp='{timestamp_str}'")
+			
+			# Validate glucose format with regex
+			if glucose_pattern.match(glucose_str):
+				input_validation_counts['valid_glucose_format'] += 1
+				file_log.debug(f"✅ Valid glucose format: {glucose_str}")
+			else:
+				file_log.warning(f"❌ Invalid glucose format: '{glucose_str}' (not 1-9 digits)")
+			
+			# Validate timestamp format with regex (support both ISO and US formats)
+			timestamp_valid = timestamp_pattern_iso.match(timestamp_str) or timestamp_pattern_us.match(timestamp_str)
+			if timestamp_valid:
+				input_validation_counts['valid_timestamp_format'] += 1
+				file_log.debug(f"✅ Valid timestamp format: {timestamp_str}")
+			else:
+				file_log.warning(f"❌ Invalid timestamp format: '{timestamp_str}' (expected ISO or US format)")
+		
+		file_log.info(f"Input glucose values (count: {len(input_values)}): {input_values}")
+		
 		processed = []
 		seen_timestamps = set()
 		
@@ -195,50 +337,109 @@ class DataFormatter:
 		end_date = None
 		if date_range and date_range.get('start_date') and date_range.get('end_date'):
 			try:
-				from datetime import datetime
 				start_date = datetime.fromisoformat(date_range['start_date'])
 				end_date = datetime.fromisoformat(date_range['end_date'])
 				file_log.info(f"Filtering readings between {start_date} and {end_date}")
 			except ValueError as e:
 				file_log.error(f"Invalid date format in date range: {e}")
 		
-		for reading in readings:
-			# add to logs the value of reading
-			file_log.debug(f"Processing reading: {reading}")
+		for i, reading in enumerate(readings):
+			file_log.debug(f"Processing reading {i+1}: {reading}")
 			
 			# Remove factory timestamp if it exists
 			if 'FactoryTimestamp' in reading:
 				del reading['FactoryTimestamp']
 				
 			timestamp = reading.get('Timestamp')
+			glucose_str = str(reading.get('Value', '')).strip()
+			
+			# Handle both string and numeric glucose values
+			try:
+				glucose_numeric = float(glucose_str)
+				glucose_validation_str = str(int(glucose_numeric)) if glucose_numeric == int(glucose_numeric) else str(glucose_numeric)
+			except (ValueError, TypeError):
+				file_log.warning(f"Skipping reading {i+1}: Invalid glucose value '{glucose_str}' (not numeric)")
+				continue
+			
+			# Check for duplicate timestamps
 			if timestamp in seen_timestamps:
+				input_validation_counts['duplicate_timestamps'] += 1
+				file_log.debug(f"Skipping duplicate timestamp: {timestamp}")
+				continue
+			
+			# Validate glucose value with regex
+			if not glucose_pattern.match(glucose_validation_str):
+				file_log.warning(f"Skipping reading {i+1}: Invalid glucose format '{glucose_str}'")
+				continue
+			
+			# Validate timestamp format (support both ISO and US formats)
+			timestamp_valid = timestamp_pattern_iso.match(str(timestamp)) or timestamp_pattern_us.match(str(timestamp))
+			if not timestamp_valid:
+				file_log.warning(f"Skipping reading {i+1}: Invalid timestamp format '{timestamp}' (expected ISO or US format)")
 				continue
 				
 			# Apply date filtering if date range is provided
 			if start_date and end_date:
 				try:
+					# Try ISO format first
 					reading_datetime = datetime.fromisoformat(timestamp)
-					if reading_datetime < start_date or reading_datetime > end_date:
-						file_log.debug(f"Skipping reading from {reading_datetime} - outside date range")
+				except (ValueError, TypeError):
+					try:
+						# Try US format parsing
+						reading_datetime = datetime.strptime(timestamp, '%m/%d/%Y %I:%M:%S %p')
+					except (ValueError, TypeError) as e:
+						file_log.warning(f"Invalid timestamp format for date filtering: {timestamp} - {e}")
 						continue
-				except (ValueError, TypeError) as e:
-					file_log.warning(f"Invalid timestamp format: {timestamp} - {e}")
+				
+				if reading_datetime < start_date or reading_datetime > end_date:
+					file_log.debug(f"Skipping reading from {reading_datetime} - outside date range")
 					continue
 			
 			seen_timestamps.add(timestamp)
 			
 			try:
-				value = float(reading.get('Value', 0))
-				reading['isLow'] = value < low_threshold
-				reading['isHigh'] = value > high_threshold
-			except (ValueError, TypeError):
-				reading['isLow'] = False
-				reading['isHigh'] = False
-			
-			if 'MeasureMent' in reading:
-				reading['MeasurementType'] = reading.pop('MeasureMent')
+				# Convert and validate glucose value (already parsed above)
+				value = glucose_numeric
 				
-			processed.append(reading)
+				# Validate glucose range (typical glucose: 20-600 mg/dL)
+				if 20 <= value <= 600:
+					input_validation_counts['valid_glucose_range'] += 1
+					
+					# Create clean reading with only Value and Timestamp but preserve MeasurementType for compatibility
+					clean_reading = {
+						'Value': value,
+						'Timestamp': timestamp,
+						'isLow': value < low_threshold,
+						'isHigh': value > high_threshold
+					}
+					
+					# Preserve MeasurementType for backward compatibility
+					if 'MeasureMent' in reading:
+						clean_reading['MeasurementType'] = reading['MeasureMent']
+					elif 'MeasurementType' in reading:
+						clean_reading['MeasurementType'] = reading['MeasurementType']
+					
+					processed.append(clean_reading)
+					input_validation_counts['processed_successfully'] += 1
+					
+					file_log.debug(f"✅ Successfully processed: {value} mg/dL at {timestamp}")
+				else:
+					file_log.warning(f"Glucose value out of range: {value} (expected 20-600 mg/dL)")
+					
+			except (ValueError, TypeError) as e:
+				file_log.warning(f"Failed to process glucose value '{glucose_str}': {e}")
+		
+		# Log comprehensive validation summary
+		output_values = [r.get('Value') for r in processed]
+		file_log.info(f"=== PROCESSING VALIDATION SUMMARY ===")
+		file_log.info(f"Total input readings: {input_validation_counts['total_input']}")
+		file_log.info(f"Valid glucose format (1-9 digits): {input_validation_counts['valid_glucose_format']}")
+		file_log.info(f"Valid timestamp format: {input_validation_counts['valid_timestamp_format']}")
+		file_log.info(f"Valid glucose range (20-600): {input_validation_counts['valid_glucose_range']}")
+		file_log.info(f"Duplicate timestamps removed: {input_validation_counts['duplicate_timestamps']}")
+		file_log.info(f"Successfully processed: {input_validation_counts['processed_successfully']}")
+		file_log.info(f"Processing success rate: {(input_validation_counts['processed_successfully'] / input_validation_counts['total_input'] * 100):.1f}%")
+		file_log.info(f"Output glucose values (count: {len(output_values)}): {output_values}")
 		
 		return processed
 
@@ -264,7 +465,11 @@ class DataFormatter:
 			item = ET.SubElement(root, "Reading")
 			for key, value in reading.items():
 				child = ET.SubElement(item, key)
-				child.text = str(value) if value is not None else ""
+				# Format numeric values to avoid unnecessary decimal points
+				if isinstance(value, float) and value == int(value):
+					child.text = str(int(value))
+				else:
+					child.text = str(value) if value is not None else ""
 		return ET.tostring(root, encoding='unicode')
 
 class ChartGenerator:
@@ -407,17 +612,120 @@ class AIAnalyzer:
 			}
 
 	def analyze(self, readings: List[Dict[str, Any]], query: str, model: str) -> Dict[str, Any]:
+		import re
+		from datetime import datetime
+		
 		file_log.info(f"Starting AI analysis with model: {model}")
 		file_log.debug(f"Analysis Query: {query}")
 		
-		valid_readings = [r for r in readings if r.get('Value')]
-		values = [float(r['Value']) for r in valid_readings]
+		# Enhanced validation with regex and count verification
+		file_log.info(f"=== GLUCOSE DATA VALIDATION & EXTRACTION ===")
+		file_log.info(f"Raw readings received: {len(readings)}")
 		
-		file_log.debug(f"Data Summary - Total readings: {len(readings)}, Valid readings: {len(valid_readings)}")
+		# Extract only glucose values (1-9 digits) and timestamps
+		validated_data = []
+		glucose_pattern = re.compile(r'^\d{1,9}(\.\d+)?$')  # 1-9 digits with optional decimal
+		# Support both ISO format and LibreView API format
+		timestamp_pattern_iso = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}')  # ISO format: 2024-01-01T10:00:00
+		timestamp_pattern_us = re.compile(r'^\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2} (AM|PM)$')  # US format: 7/27/2025 5:46:35 PM
 		
-		if not values:
-			file_log.warning("Analysis failed: No valid glucose readings found")
-			return {"result": "No valid glucose readings found for analysis.", "has_code": False}
+		for i, reading in enumerate(readings):
+			file_log.debug(f"Processing reading {i+1}: {reading}")
+			
+			# Extract and validate glucose value
+			glucose_value = str(reading.get('Value', '')).strip()
+			timestamp = str(reading.get('Timestamp', '')).strip()
+			
+			# Handle both string and numeric glucose values
+			try:
+				numeric_value = float(glucose_value)
+				glucose_str = str(int(numeric_value)) if numeric_value == int(numeric_value) else str(numeric_value)
+			except (ValueError, TypeError):
+				file_log.warning(f"❌ Invalid glucose value (not numeric): '{glucose_value}'")
+				continue
+			
+			# Validate glucose value with regex (1-9 digits with optional decimal)
+			if glucose_pattern.match(glucose_str):
+				# Validate timestamp format (support both ISO and US formats)
+				timestamp_valid = timestamp_pattern_iso.match(timestamp) or timestamp_pattern_us.match(timestamp)
+				if timestamp_valid:
+					try:
+						# Validate range (typical glucose: 20-600 mg/dL)
+						if 20 <= numeric_value <= 600:
+							# Parse timestamp to ensure it's valid
+							try:
+								# Try ISO format first
+								parsed_timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00') if timestamp.endswith('Z') else timestamp)
+							except ValueError:
+								# Try US format parsing
+								from datetime import datetime
+								parsed_timestamp = datetime.strptime(timestamp, '%m/%d/%Y %I:%M:%S %p')
+							
+							validated_entry = {
+								'glucose_value': numeric_value,
+								'timestamp': timestamp,
+								'parsed_timestamp': parsed_timestamp
+							}
+							validated_data.append(validated_entry)
+							
+							file_log.debug(f"✅ Valid glucose entry: {numeric_value} mg/dL at {timestamp}")
+						else:
+							file_log.warning(f"❌ Glucose value out of range: {numeric_value} (expected 20-600 mg/dL)")
+					except (ValueError, TypeError) as e:
+						file_log.warning(f"❌ Invalid timestamp parsing: {timestamp} - {e}")
+				else:
+					file_log.warning(f"❌ Invalid timestamp format: {timestamp} (expected ISO or US format)")
+			else:
+				file_log.warning(f"❌ Invalid glucose value format: '{glucose_str}'")
+		
+		# Count and verify extracted data
+		total_input = len(readings)
+		valid_extracted = len(validated_data)
+		extraction_rate = (valid_extracted / total_input * 100) if total_input > 0 else 0
+		
+		file_log.info(f"=== GLUCOSE EXTRACTION SUMMARY ===")
+		file_log.info(f"Input readings: {total_input}")
+		file_log.info(f"Valid glucose+timestamp pairs: {valid_extracted}")
+		file_log.info(f"Extraction success rate: {extraction_rate:.1f}%")
+		
+		if validated_data:
+			glucose_values = [entry['glucose_value'] for entry in validated_data]
+			timestamps = [entry['timestamp'] for entry in validated_data]
+			
+			file_log.info(f"Glucose values (count: {len(glucose_values)}): {glucose_values}")
+			file_log.info(f"Timestamps (count: {len(timestamps)}): {timestamps[:3]}{'...' if len(timestamps) > 3 else ''}")
+			
+			# Additional validation statistics
+			min_glucose = min(glucose_values)
+			max_glucose = max(glucose_values)
+			avg_glucose = sum(glucose_values) / len(glucose_values)
+			
+			file_log.info(f"Glucose statistics - Min: {min_glucose}, Max: {max_glucose}, Avg: {avg_glucose:.1f}")
+			
+			# Time range validation
+			timestamps_sorted = sorted([entry['parsed_timestamp'] for entry in validated_data])
+			time_span = timestamps_sorted[-1] - timestamps_sorted[0]
+			
+			file_log.info(f"Time range - From: {timestamps_sorted[0]} To: {timestamps_sorted[-1]} (Span: {time_span})")
+		else:
+			file_log.error(f"❌ NO VALID GLUCOSE DATA EXTRACTED from {total_input} input readings")
+			return {"result": "No valid glucose readings found for analysis. Please check data format.", "has_code": False}
+		
+		# Prepare simplified data for LLM (only glucose values and timestamps)
+		llm_data = []
+		for entry in validated_data:
+			llm_data.append({
+				'Value': entry['glucose_value'],
+				'Timestamp': entry['timestamp']
+			})
+		
+		file_log.info(f"=== LLM INPUT PREPARATION ===")
+		file_log.info(f"Sending {len(llm_data)} validated glucose readings to LLM")
+		file_log.info(f"LLM will receive glucose values: {[d['Value'] for d in llm_data]}")
+		
+		# Continue with existing logic using validated data
+		valid_readings = llm_data
+		values = [entry['glucose_value'] for entry in validated_data]
 		
 		# Check if this is a complex query that might benefit from code execution
 		complex_keywords = [
@@ -477,7 +785,7 @@ class AIAnalyzer:
 			You are a medical data analyst specializing in glucose monitoring. Here is a set of glucose readings:
 			
 			Glucose Data:
-			{df.head(10).to_string()}
+			{df.to_string()}
 			
 			Basic Statistics:
 			- Number of readings: {len(values)}
@@ -676,6 +984,11 @@ def main():
 	st.title("🔬 Glucose-GPT - AI Glucose Analytics")
 	
 	file_log.info("Application started")
+	
+	# Force reload configuration in Streamlit context
+	file_log.info(f"Current working directory: {os.getcwd()}")
+	config_manager._load_configuration()  # Force reload configuration
+	file_log.info(f"Configuration reloaded - Has credentials: {config_manager.has_required_credentials()}")
 	
 	# Run comprehensive tests on first launch
 	if 'tests_run' not in st.session_state:
