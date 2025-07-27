@@ -33,6 +33,11 @@ class ConfigurationLoader:
 		"""Load and validate configuration from hierarchical sources."""
 		self.file_log.debug("Loading configuration from strict priority hierarchy: ENV → Streamlit → pyproject.toml → project.toml")
 		
+		# Debug: Show current configuration state
+		self.file_log.info(f"Debug - Current config: {dict(config_manager.config)}")
+		self.file_log.info(f"Debug - Has required credentials: {config_manager.has_required_credentials()}")
+		self.file_log.info(f"Debug - Missing credentials: {config_manager.get_missing_credentials()}")
+		
 		# Check if required credentials are available
 		if not config_manager.has_required_credentials():
 			missing = config_manager.get_missing_credentials()
@@ -47,7 +52,10 @@ class ConfigurationLoader:
 			if error_messages:
 				error_msg = "Missing required configuration:\n- " + "\n- ".join(error_messages)
 				self.file_log.error(f"Configuration Error - {error_msg}")
+				
+				# Debug: Show more details
 				st.error(f"⚠️ {error_msg}")
+				st.code(f"Debug Info:\nConfig loaded: {dict(config_manager.config)}\nMissing: {missing}")
 				
 				# Show configuration sources status with priority explanation
 				sources = config_manager.get_configuration_sources()

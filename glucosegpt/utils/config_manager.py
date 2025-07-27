@@ -47,7 +47,8 @@ class ConfigurationManager:
         """Load configuration from .env file - HIGHEST PRIORITY."""
         env_path = self.project_root / '.env'
         if env_path.exists():
-            load_dotenv(env_path)
+            # Force reload the .env file
+            load_dotenv(env_path, override=True)
             
             # Load environment variables into config
             env_vars = [
@@ -58,8 +59,8 @@ class ConfigurationManager:
             
             for var in env_vars:
                 value = os.getenv(var)
-                if value:  # Only load non-empty values
-                    self.config[var.lower()] = value
+                if value and str(value).strip():  # Only load non-empty values
+                    self.config[var.lower()] = str(value).strip()
     
     def _load_from_streamlit_secrets(self) -> None:
         """Load configuration from Streamlit secrets as SECOND priority fallback."""
@@ -77,9 +78,15 @@ class ConfigurationManager:
                     # Only use Streamlit secret if not already set from .env
                     if config_key not in self.config:
                         try:
-                            value = st.secrets.get(key)
-                            if value:
-                                self.config[config_key] = value
+                            # Try both methods of accessing Streamlit secrets
+                            value = None
+                            if hasattr(st.secrets, key):
+                                value = getattr(st.secrets, key)
+                            elif key in st.secrets:
+                                value = st.secrets[key]
+                            
+                            if value and str(value).strip():  # Ensure value is not empty
+                                self.config[config_key] = str(value).strip()
                         except Exception:
                             # Secret doesn't exist, continue
                             continue
