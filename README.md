@@ -10,6 +10,10 @@
 ![Glucose-GPT AI Analysis](resources/glucose_gpt_ai_analysis.png)
 *Advanced AI analysis dashboard displaying glucose patterns, trends, and personalized insights*
 
+### AI Chat Interface
+![Glucose-GPT AI Chat](resources/glucose_gpt_ai_chat.png)
+*Interactive AI chat interface for real-time glucose data analysis and personalized insights*
+
 ## Overview
 
 A dual-purpose solution combining:
