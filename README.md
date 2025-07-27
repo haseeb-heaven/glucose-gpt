@@ -1,4 +1,4 @@
-# LibreChat - AI-Powered Glucose Monitoring Platform & SDK
+# Glucose-GPT - AI-Powered Glucose Monitoring Platform & SDK
 
 A dual-purpose solution combining:
 1. An intelligent chat application for glucose monitoring analysis using multiple AI models
@@ -252,6 +252,7 @@ streamlit run libreapp/examples/libre_chat.py
    - Real-time data visualization
    - Pattern recognition and insights
    - Export capabilities for reports
+   - **Automatic Testing**: Tests run automatically on first launch to ensure system integrity
 
 ### Using the SDK
 
@@ -288,6 +289,41 @@ The API provides:
 
 Note: This is a community-driven, unofficial implementation and is not affiliated with Abbott Diabetes Care, Inc.
 
+## Testing
+
+The application includes comprehensive testing infrastructure:
+
+### Automatic Testing
+- Tests run automatically when the Streamlit application is first launched
+- Ensures system integrity and component functionality before user interaction
+- Quick validation of core functionality without external dependencies
+
+### Manual Testing
+You can also run tests manually using:
+
+```bash
+# Run all simple unit tests
+python -m pytest tests/test_libre_chat_simple.py -v
+
+# Run integration tests (requires more setup)
+python -m pytest tests/test_libre_chat_integration.py -v
+
+# Run all tests with coverage
+python -m pytest tests/ --cov=libreapp --cov-report=html
+
+# Use the custom test runner
+python run_tests.py
+```
+
+### Test Coverage
+- **Unit Tests**: Core functionality without external dependencies
+- **Integration Tests**: Full workflow testing with mocked external services
+- **Data Processing**: Glucose data analysis and transformation
+- **AI Integration**: LLM interaction and code execution
+- **Error Handling**: Comprehensive error scenarios and edge cases
+
+See `TESTING.md` for detailed testing documentation.
+
 ## Contributing
 
 1. Fork the repository
@@ -309,6 +345,18 @@ LibreChat provides an intelligent interface for glucose monitoring analysis:
 # Run the AI Chat application
 streamlit run libreapp/examples/libre_chat.py
 ```
+
+### Screenshots
+
+#### Streamlit Interface
+The main interface provides an intuitive web-based experience for glucose data analysis:
+
+![LibreApp Streamlit Interface](resources/libreapp_streamlit_interface.png)
+
+#### AI-Powered Analysis
+Advanced AI analysis with multiple model support and interactive visualizations:
+
+![LibreApp AI Analysis](resources/libreapp_ai_analysis.png)
 
 ### Features
 - **Multiple AI Models**:

@@ -635,6 +635,30 @@ def main():
 	
 	file_log.info("Application started")
 	
+	# Run tests on first launch (if session state is clean)
+	if 'tests_run' not in st.session_state:
+		st.session_state.tests_run = True
+		with st.spinner("Running initial tests..."):
+			try:
+				import subprocess
+				import sys
+				os.environ['MPLBACKEND'] = 'Agg'  # Set non-interactive backend
+				
+				# Run a quick test to ensure everything is working
+				result = subprocess.run([
+					sys.executable, "-m", "pytest", "tests/test_libre_chat_simple.py", "-v", "--tb=short", "-x"
+				], capture_output=True, text=True, cwd=os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+				
+				if result.returncode == 0:
+					st.success("✅ All tests passed! Application is ready.")
+					file_log.info("Initial tests passed successfully")
+				else:
+					st.warning("⚠️ Some tests failed but application will continue. Check logs for details.")
+					file_log.warning(f"Initial tests failed: {result.stderr}")
+			except Exception as e:
+				st.warning(f"⚠️ Could not run tests: {str(e)}. Application will continue.")
+				file_log.warning(f"Test execution failed: {str(e)}")
+	
 	env_loader = EnvironmentLoader()
 	defaults = env_loader.load_defaults()
 	
