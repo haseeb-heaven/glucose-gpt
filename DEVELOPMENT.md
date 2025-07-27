@@ -6,9 +6,9 @@
 ```
 tests/
 ├── test_api_clients.py              # API client tests (17 test classes)
-├── test_libre_chat.py               # Full pytest test suite
-├── test_libre_chat_simple.py        # Core unit tests
-├── test_libre_chat_integration.py   # Integration tests
+├── test_glucose_chat.py               # Full pytest test suite
+├── test_glucose_chat_simple.py        # Core unit tests
+├── test_glucose_chat_integration.py   # Integration tests
 ├── conftest.py                      # Shared fixtures
 └── __init__.py                      # Test package marker
 ```

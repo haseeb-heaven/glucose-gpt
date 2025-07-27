@@ -70,7 +70,7 @@ class TestRunner:
             print("🧪 Running Unit Tests...")
             result = subprocess.run([
                 sys.executable, "-m", "pytest", 
-                "tests/test_libre_chat_simple.py", 
+                "tests/test_glucose_chat_simple.py", 
                 "-v", "--tb=short"
             ], 
             cwd=self.project_root,
@@ -98,7 +98,7 @@ class TestRunner:
             print("🧪 Running Integration Tests...")
             result = subprocess.run([
                 sys.executable, "-m", "pytest", 
-                "tests/test_libre_chat_integration.py", 
+                "tests/test_glucose_chat_integration.py", 
                 "-v", "--tb=short"
             ], 
             cwd=self.project_root,

@@ -359,11 +359,11 @@ def run_integration_tests():
         test_complete_workflow_integration()
         
         print("=" * 60)
-        print("🎉 All integration tests passed successfully!")
+        print("🎉 All Glucose-GPT integration tests passed successfully!")
         return True
         
     except Exception as e:
-        print(f"❌ Integration test failed: {e}")
+        print(f"❌ Glucose-GPT integration test failed: {e}")
         import traceback
         traceback.print_exc()
         return False

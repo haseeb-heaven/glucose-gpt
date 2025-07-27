@@ -316,11 +316,49 @@ class TestChartGenerator:
         settings_with_filter = self.chart_settings.copy()
         settings_with_filter["filter_by_range"] = True
         
-        # Mock the actual chart creation since we can't test plotly directly
-        with mock.patch('pandas.DataFrame') as mock_df:
+        # Mock all the dependencies more comprehensively
+        with mock.patch('glucosegpt.examples.glucose_chat.pd.DataFrame') as mock_df_class, \
+             mock.patch('glucosegpt.examples.glucose_chat.pd.to_datetime') as mock_to_datetime, \
+             mock.patch('glucosegpt.examples.glucose_chat.px.line') as mock_line:
+            
+            # Create a mock DataFrame instance
             mock_df_instance = mock.Mock()
-            mock_df.return_value = mock_df_instance
+            mock_df_class.return_value = mock_df_instance
+            
+            # Mock DataFrame properties and methods
             mock_df_instance.empty = False
+            mock_df_instance.shape = (3, 2)
+            
+            # Mock series for subscripting behavior
+            mock_timestamp_series = mock.Mock()
+            mock_value_series = mock.Mock()
+            
+            # Mock comparison operations to return boolean masks
+            mock_mask = mock.Mock()
+            mock_value_series.__ge__ = mock.Mock(return_value=mock_mask)
+            mock_value_series.__le__ = mock.Mock(return_value=mock_mask)
+            mock_mask.__and__ = mock.Mock(return_value=mock_mask)
+            
+            mock_df_instance.__getitem__ = mock.Mock(side_effect=lambda key: {
+                'Timestamp': mock_timestamp_series,
+                'Value': mock_value_series
+            }.get(key, mock_df_instance))  # Return df for filtering operations
+            
+            # Mock item assignment (df['column'] = value)
+            mock_df_instance.__setitem__ = mock.Mock()
+            
+            # Mock the filtering operations
+            mock_df_instance.__len__ = mock.Mock(return_value=3)
+            mock_df_instance.sort_values = mock.Mock(return_value=mock_df_instance)
+            
+            # Mock to_datetime
+            mock_to_datetime.return_value = mock_timestamp_series
+            
+            # Mock plotly.express
+            mock_fig = mock.Mock()
+            mock_line.return_value = mock_fig
+            mock_fig.update_traces = mock.Mock()
+            mock_fig.update_layout = mock.Mock()
             
             # This test mainly verifies the filtering logic
             # The actual chart creation is hard to test without plotly dependencies
@@ -329,6 +367,9 @@ class TestChartGenerator:
                 "line", 
                 settings_with_filter
             )
+            
+            # Verify that a figure was returned
+            assert result is not None
 
 
 class TestAIAnalyzer:

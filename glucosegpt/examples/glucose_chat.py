@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 import uuid
 import litellm
 import numpy as np
+import numpy as np
 from glucosegpt.utils.code_runner import CodeRunner
 from glucosegpt.clients.libre_view import LibreCGMClient, ApiConfig
 from glucosegpt.utils.data_masking import DefaultDataMasker
@@ -30,7 +31,7 @@ class ConfigurationLoader:
 
 	def load_defaults(self) -> dict:
 		"""Load and validate configuration from hierarchical sources."""
-		self.file_log.debug("Loading configuration from strict priority hierarchy: .env → TOML → Streamlit secrets")
+		self.file_log.debug("Loading configuration from strict priority hierarchy: ENV → Streamlit → pyproject.toml → project.toml")
 		
 		# Check if required credentials are available
 		if not config_manager.has_required_credentials():
@@ -187,8 +188,8 @@ class DataFormatter:
 		if date_range and date_range.get('start_date') and date_range.get('end_date'):
 			try:
 				from datetime import datetime
-				start_date = datetime.fromisoformat(date_range['start_date']).date()
-				end_date = datetime.fromisoformat(date_range['end_date']).date()
+				start_date = datetime.fromisoformat(date_range['start_date'])
+				end_date = datetime.fromisoformat(date_range['end_date'])
 				file_log.info(f"Filtering readings between {start_date} and {end_date}")
 			except ValueError as e:
 				file_log.error(f"Invalid date format in date range: {e}")
@@ -208,9 +209,9 @@ class DataFormatter:
 			# Apply date filtering if date range is provided
 			if start_date and end_date:
 				try:
-					reading_date = datetime.fromisoformat(timestamp).date()
-					if reading_date < start_date or reading_date > end_date:
-						file_log.debug(f"Skipping reading from {reading_date} - outside date range")
+					reading_datetime = datetime.fromisoformat(timestamp)
+					if reading_datetime < start_date or reading_datetime > end_date:
+						file_log.debug(f"Skipping reading from {reading_datetime} - outside date range")
 						continue
 				except (ValueError, TypeError) as e:
 					file_log.warning(f"Invalid timestamp format: {timestamp} - {e}")
