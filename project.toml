@@ -1,0 +1,19 @@
+# Project-specific configuration for Glucose-GPT
+# This is a TOML configuration file that serves as fallback for .env variables
+
+# LibreView/LibreLinkUp Configuration
+LIBRE_USERNAME = ""
+LIBRE_PASSWORD = ""
+LIBRE_VERSION = "4.9.0"
+LIBRE_PRODUCT = "llu.android"
+
+# AI Model API Keys
+GEMINI_API_KEY = ""
+OPENAI_API_KEY = ""
+ANTHROPIC_API_KEY = ""
+COHERE_API_KEY = ""
+REPLICATE_API_KEY = ""
+
+# Optional Configuration
+DEFAULT_MODEL = "gemini/gemini-1.5-flash"
+LOG_LEVEL = "INFO"

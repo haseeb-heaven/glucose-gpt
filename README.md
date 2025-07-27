@@ -341,9 +341,6 @@ python -m pytest tests/test_api_clients.py -v
 
 # Run all tests with coverage
 python -m pytest tests/ --cov=glucosegpt --cov-report=html
-
-# Use the custom test runner
-python run_tests.py
 ```
 
 ### Test Coverage
@@ -378,77 +375,6 @@ See `TESTING.md` and `DEVELOPMENT.md` for detailed testing documentation.
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
-## AI Chat Application
-
-Glucose-GPT provides an intelligent interface for glucose monitoring analysis:
-
-### Quick Start
-```bash
-# Run the AI Chat application
-streamlit run glucosegpt/examples/glucose_chat.py
-```
-
-### Screenshots
-
-#### Streamlit Interface
-The main interface provides an intuitive web-based experience for glucose data analysis:
-
-![Glucose-GPT Streamlit Interface](resources/glucose_gpt_streamlit_interface.png)
-
-#### AI-Powered Analysis
-Advanced AI analysis with multiple model support and interactive visualizations:
-
-![Glucose-GPT AI Analysis](resources/glucose_gpt_ai_analysis.png)
-
-### Features
-- **Multiple AI Models**:
-  - Switch between different AI models (Gemini, GPT-4, Claude, etc.)
-  - Compare analyses from different models
-  - Unified interface through LiteLLM
-
-- **Interactive Analysis**:
-  - Real-time glucose data visualization
-  - AI-powered trend analysis
-  - Pattern recognition
-  - Anomaly detection
-  - Predictive insights
-
-- **Customization**:
-  - Choose preferred AI model
-  - Customize analysis parameters
-  - Set personal glucose targets
-  - Configure visualization preferences
-
-- **Data Management**:
-  - Export reports and analyses
-  - Save AI conversations
-  - Download visualizations
-  - Share insights securely
-
-### AI Model Configuration
-```python
-# Example of switching AI models
-from litellm import completion
-
-# Using Gemini
-response = completion(
-    model="gemini-1.0-pro",
-    messages=[{"content": "Analyze glucose patterns"}]
-)
-
-# Using GPT-4
-response = completion(
-    model="gpt-4",
-    messages=[{"content": "Identify glucose trends"}]
-)
-
-# Using Claude
-response = completion(
-    model="anthropic/claude-2",
-    messages=[{"content": "Suggest glucose management strategies"}]
-)
-```
 
 ## Changelog
 

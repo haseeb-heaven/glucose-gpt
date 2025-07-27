@@ -12,90 +12,83 @@ import xml.etree.ElementTree as ET
 import plotly.express as px
 import plotly.graph_objects as go
 import uuid
-from dotenv import load_dotenv
 import litellm
 import numpy as np
 from glucosegpt.utils.code_runner import CodeRunner
 from glucosegpt.clients.libre_view import LibreCGMClient, ApiConfig
 from glucosegpt.utils.data_masking import DefaultDataMasker
+from glucosegpt.utils.config_manager import config_manager
 from glucosegpt.utils.logger import setup_logger
 
 # Set up loggers
 console_log, file_log = setup_logger()
 
-class EnvironmentLoader:
+class ConfigurationLoader:
 	def __init__(self):
 		self.console_log = console_log
 		self.file_log = file_log
 
-	def check_env_file(self) -> bool:
-		"""Check if .env file exists and load it."""
-		env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
-		if not os.path.exists(env_path):
-			self.file_log.error("No .env file found. Please copy .env.example to .env and configure it.")
-			st.error("⚠️ No .env file found. Please copy .env.example to .env and configure it.")
-			return False
-		load_dotenv(env_path)
-		return True
-
 	def load_defaults(self) -> dict:
-		"""Load and validate environment variables."""
-		self.file_log.debug("Loading environment variables from .env file")
+		"""Load and validate configuration from hierarchical sources."""
+		self.file_log.debug("Loading configuration from strict priority hierarchy: .env → TOML → Streamlit secrets")
 		
-		if not self.check_env_file():
-			return {}
+		# Check if required credentials are available
+		if not config_manager.has_required_credentials():
+			missing = config_manager.get_missing_credentials()
+			error_messages = []
+			
+			if missing['libre']:
+				error_messages.append(f"LibreView credentials: {', '.join(missing['libre'])}")
+			
+			if missing['ai']:
+				error_messages.append("At least one AI API key is required")
+			
+			if error_messages:
+				error_msg = "Missing required configuration:\n- " + "\n- ".join(error_messages)
+				self.file_log.error(f"Configuration Error - {error_msg}")
+				st.error(f"⚠️ {error_msg}")
+				
+				# Show configuration sources status with priority explanation
+				sources = config_manager.get_configuration_sources()
+				st.info(f"""
+**Configuration Priority System Status:**
 
-		# Define required variables
-		required_vars = {
-			"LIBRE_USERNAME": "LibreView username/email",
-			"LIBRE_PASSWORD": "LibreView password"
-		}
+🥇 **HIGHEST PRIORITY** - .env file: {sources['env_file']}
+🥈 **SECOND PRIORITY** - Streamlit secrets: {sources['streamlit_secrets']}
+� **THIRD PRIORITY** - pyproject.toml: {sources['pyproject_toml']}
+🏴 **LOWEST PRIORITY** - project.toml: {sources['project_toml']}
 
-		# Check for required variables
-		missing_vars = []
-		for var, description in required_vars.items():
-			if not os.getenv(var):
-				missing_vars.append(description)
+⚠️ **IMPORTANT**: The system FIRST searches .env file, then Streamlit secrets, then pyproject.toml, and ONLY uses project.toml as final fallback.
 
-		if missing_vars:
-			error_msg = "Missing required environment variables:\n- " + "\n- ".join(missing_vars)
-			self.file_log.error(f"Configuration Error - {error_msg}")
-			self.file_log.debug(f"Environment Check - Required Variables: {list(required_vars.keys())}")
-			st.error(f"⚠️ {error_msg}")
-			st.info("Please check your .env file and ensure all required variables are set.")
-			return {}
+Please configure at least one source with your credentials (preferably .env file).
+				""")
+				return {}
 
-		# At least one AI model API key is required
-		ai_keys = [
-			os.getenv("OPENAI_API_KEY"),
-			os.getenv("ANTHROPIC_API_KEY"),
-			os.getenv("GEMINI_API_KEY"),
-			os.getenv("COHERE_API_KEY"),
-			os.getenv("REPLICATE_API_KEY")
-		]
+		# Get configuration from the manager
+		libre_config = config_manager.get_libre_config()
+		api_keys = config_manager.get_api_keys()
 		
-		if not any(ai_keys):
-			error_msg = "At least one AI model API key is required (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, COHERE_API_KEY, or REPLICATE_API_KEY)"
-			self.file_log.error(error_msg)
-			st.error(f"⚠️ {error_msg}")
-			return {}
-
 		defaults = {
-			"libre_username": os.getenv("LIBRE_USERNAME", ""),
-			"libre_password": os.getenv("LIBRE_PASSWORD", ""),
-			"openai_api_key": os.getenv("OPENAI_API_KEY", ""),
-			"anthropic_api_key": os.getenv("ANTHROPIC_API_KEY", ""),
-			"gemini_api_key": os.getenv("GEMINI_API_KEY", ""),
-			"cohere_api_key": os.getenv("COHERE_API_KEY", ""),
-			"replicate_api_key": os.getenv("REPLICATE_API_KEY", ""),
-			"libre_version": os.getenv("LIBRE_VERSION", "4.7"),
-			"libre_product": os.getenv("LIBRE_PRODUCT", "llu.ios"),
-			"default_model": os.getenv("DEFAULT_MODEL", "gemini/gemini-1.5-flash")
+			"libre_username": libre_config['username'],
+			"libre_password": libre_config['password'],
+			"libre_version": libre_config['version'],
+			"libre_product": libre_config['product'],
+			"openai_api_key": api_keys.get('openai_api_key', ''),
+			"anthropic_api_key": api_keys.get('anthropic_api_key', ''),
+			"gemini_api_key": api_keys.get('gemini_api_key', ''),
+			"cohere_api_key": api_keys.get('cohere_api_key', ''),
+			"replicate_api_key": api_keys.get('replicate_api_key', ''),
+			"default_model": config_manager.get('default_model', 'gemini/gemini-1.5-flash')
 		}
 		
-		# Log non-sensitive environment variables
+		# Log non-sensitive configuration variables
 		non_sensitive = {k: v for k, v in defaults.items() if 'password' not in k and 'key' not in k}
-		self.file_log.debug(f"Loaded environment variables: {non_sensitive}")
+		self.file_log.debug(f"Loaded configuration from priority hierarchy: {non_sensitive}")
+		
+		# Log which sources provided configuration
+		sources = config_manager.get_configuration_sources()
+		self.file_log.info(f"Configuration sources priority status: {sources}")
+		
 		return defaults
 
 class LibreClientManager:
@@ -587,32 +580,72 @@ def show_configuration_guide():
 	st.error("⚠️ Configuration Incomplete")
 	
 	st.markdown("""
-	### 📝 Configuration Guide
+	### 📝 Glucose-GPT Configuration Priority System
 	
-	1. **Create Environment File**:
+	**Glucose-GPT follows a strict priority order for configuration:**
+	1. 🥇 **Environment File (.env)** - **HIGHEST PRIORITY**
+	2. 🥈 **Streamlit Secrets** - **SECOND PRIORITY**
+	3. 🥉 **pyproject.toml** - **THIRD PRIORITY**
+	4. 🏴 **project.toml** - **LOWEST PRIORITY**
+	
+	⚠️ **IMPORTANT**: The system will FIRST check .env file, then Streamlit secrets, then pyproject.toml, and ONLY use project.toml as final fallback!
+	
+	#### 🥇 Method 1: Environment File (.env) - RECOMMENDED
 	```bash
+	# Create and configure .env file (HIGHEST PRIORITY)
 	cp .env.example .env
+	# Edit .env file with your credentials
 	```
 	
-	2. **Configure Required Credentials**:
+	#### 🥈 Method 2: Streamlit Secrets (Second Priority)
+	```bash
+	# Configure .streamlit/secrets.toml - used if .env is missing values
+	LIBRE_USERNAME = "your.email@example.com"
+	LIBRE_PASSWORD = "your_password"
+	GEMINI_API_KEY = "your_gemini_key"
+	```
+	
+	#### 🥉 Method 3: pyproject.toml (Third Priority)
+	```bash
+	# Configure pyproject.toml - used if .env and Streamlit are missing values
+	[glucose-gpt]
+	LIBRE_USERNAME="your.email@example.com"
+	LIBRE_PASSWORD="your_password"
+	GEMINI_API_KEY="your_gemini_key"
+	```
+	
+	#### 🏴 Method 4: project.toml (Lowest Priority)
+	```bash
+	# Configure project.toml - only used as final fallback
+	LIBRE_USERNAME="your.email@example.com"
+	LIBRE_PASSWORD="your_password"
+	GEMINI_API_KEY="your_gemini_key"
+	```
+	
+	### 🔑 Required Configuration
+	
+	**LibreView Credentials (Required)**:
 	- `LIBRE_USERNAME`: Your LibreView account email/username
 	- `LIBRE_PASSWORD`: Your LibreView account password
 	
-	3. **Add at least one AI Model API Key**:
-	- `GEMINI_API_KEY`: Google's Gemini AI
+	**AI Model API Keys (At least one required)**:
+	- `GEMINI_API_KEY`: Google's Gemini AI (recommended)
 	- `OPENAI_API_KEY`: OpenAI's GPT models
 	- `ANTHROPIC_API_KEY`: Anthropic's Claude
 	- `COHERE_API_KEY`: Cohere's models
 	- `REPLICATE_API_KEY`: Replicate's models
 	
-	4. **Optional Settings**:
-	- `LIBRE_VERSION`: API version (default: 4.7)
-	- `LIBRE_PRODUCT`: Product type (ios/android)
+	### ⚙️ Optional Settings
+	- `LIBRE_VERSION`: API version (default: 4.9.0)
+	- `LIBRE_PRODUCT`: Product type (default: llu.android)
 	- `DEFAULT_MODEL`: Preferred AI model (default: gemini/gemini-1.5-flash)
 	
 	### 🔄 Next Steps
-	1. Configure your `.env` file
-	2. Restart the application
+	1. **RECOMMENDED**: Use the .env file method (highest priority)
+	2. Add your credentials to your chosen configuration source
+	3. Restart the application
+	
+	💡 **Tip**: Always use .env file for maximum compatibility and security!
 	""")
 
 def display_support():
@@ -663,8 +696,8 @@ def main():
 			file_log.error(f"Test execution failed: {str(e)}")
 			st.stop()  # Stop execution if tests fail critically
 	
-	env_loader = EnvironmentLoader()
-	defaults = env_loader.load_defaults()
+	config_loader = ConfigurationLoader()
+	defaults = config_loader.load_defaults()
 	
 	if not defaults:
 		show_configuration_guide()
