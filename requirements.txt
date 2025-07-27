@@ -8,3 +8,6 @@ streamlit>=1.0.0        # For Streamlit integration
 litellm>=0.1.0          # For LiteLLM integration
 plotly>=5.0.0           # For data visualization
 pandas>=2.0.0           # For data analysis
+matplotlib>=3.5.0       # For code execution in AIAnalyzer
+numpy>=1.21.0           # For numerical operations
+regex>=2022.1.18        # For code extraction in CodeRunner

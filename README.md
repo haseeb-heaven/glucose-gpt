@@ -14,15 +14,18 @@ This platform leverages multiple AI models (Gemini, GPT-4, Claude, etc.) through
 
 ### AI Chat Application
 - **Multi-Model AI Support**: 
-  - Google's Gemini
-  - OpenAI's GPT-4/3.5
-  - Anthropic's Claude
-  - Replicate's models
-  - Cohere's models
+  - Google's Gemini (recommended and fully tested)
+  - OpenAI's GPT-4/3.5 (untested)
+  - Anthropic's Claude (untested)
+  - Replicate's models (untested)
+  - Cohere's models (untested)
 - **LiteLLM Integration**: Unified interface for all AI models
+- **Note**: Currently, only Google's Gemini models have been thoroughly tested
 - **Streamlit Interface**: Rich, interactive web application
 - **Advanced Analytics**: Real-time glucose pattern analysis
 - **Customizable Experience**: Choose your preferred AI model
+- **Intelligent Code Execution**: Automatically detects complex queries and runs Python code for advanced analysis
+- **Real-time Query Detection**: Identifies complex queries that may benefit from code execution
 
 ### Medical Technology SDK
 - **SOLID Principles**: Clean, modular, and maintainable code architecture
