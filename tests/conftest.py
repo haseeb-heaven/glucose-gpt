@@ -140,7 +140,7 @@ LIBRE_PRODUCT=llu.ios
 def setup_logging():
     """Fixture to setup logging for tests."""
     # Mock the logger setup to avoid file creation during tests
-    with patch('libreapp.examples.libre_chat.setup_logger') as mock_setup:
+    with patch('glucosegpt.examples.glucose_chat.setup_logger') as mock_setup:
         mock_logger = Mock()
         mock_setup.return_value = (mock_logger, mock_logger)
         yield mock_logger
@@ -193,5 +193,5 @@ class MockCodeRunner:
 @pytest.fixture
 def mock_code_runner():
     """Fixture providing a mock CodeRunner."""
-    with patch('libreapp.examples.libre_chat.CodeRunner', MockCodeRunner):
+    with patch('glucosegpt.examples.glucose_chat.CodeRunner', MockCodeRunner):
         yield MockCodeRunner

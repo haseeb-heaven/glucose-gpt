@@ -624,7 +624,7 @@ def display_support():
 				<li style="margin-right: 10px;"><a href="https://twitter.com/haseeb_heaven" target="_blank"><img src="https://img.icons8.com/color/32/000000/twitter--v1.png"/></a></li>
 				<li style="margin-right: 10px;"><a href="https://www.buymeacoffee.com/haseebheaven" target="_blank"><img src="https://img.icons8.com/color/32/000000/coffee-to-go--v1.png"/></a></li>
 				<li style="margin-right: 10px;"><a href="https://www.youtube.com/@HaseebHeaven/videos" target="_blank"><img src="https://img.icons8.com/color/32/000000/youtube-play.png"/></a></li>
-				<li><a href="https://github.com/haseeb-heaven/LangChain-Coder" target="_blank"><img src="https://img.icons8.com/color/32/000000/github--v1.png"/></a></li>
+				<li><a href="https://github.com/haseeb-heaven/glucose-gpt" target="_blank"><img src="https://img.icons8.com/color/32/000000/github--v1.png"/></a></li>
 			</ul>
 		</div>
 	""", unsafe_allow_html=True)
@@ -635,29 +635,33 @@ def main():
 	
 	file_log.info("Application started")
 	
-	# Run tests on first launch (if session state is clean)
+	# Run comprehensive tests on first launch
 	if 'tests_run' not in st.session_state:
 		st.session_state.tests_run = True
-		with st.spinner("Running initial tests..."):
-			try:
-				import subprocess
-				import sys
-				os.environ['MPLBACKEND'] = 'Agg'  # Set non-interactive backend
+		
+		# Import test runner
+		try:
+			from glucosegpt.utils.test_runner import TestRunner
+			
+			with st.spinner("🧪 Running comprehensive test suite..."):
+				test_runner = TestRunner()
+				tests_passed = test_runner.run_pre_launch_tests()
 				
-				# Run a quick test to ensure everything is working
-				result = subprocess.run([
-					sys.executable, "-m", "pytest", "tests/test_libre_chat_simple.py", "-v", "--tb=short", "-x"
-				], capture_output=True, text=True, cwd=os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+				if not tests_passed:
+					st.error("❌ Critical tests failed! Please fix the issues before continuing.")
+					st.info("💡 Check the test failure details above and run tests manually to debug.")
+					st.stop()  # Stop execution if tests fail
 				
-				if result.returncode == 0:
-					st.success("✅ All tests passed! Application is ready.")
-					file_log.info("Initial tests passed successfully")
-				else:
-					st.warning("⚠️ Some tests failed but application will continue. Check logs for details.")
-					file_log.warning(f"Initial tests failed: {result.stderr}")
-			except Exception as e:
-				st.warning(f"⚠️ Could not run tests: {str(e)}. Application will continue.")
-				file_log.warning(f"Test execution failed: {str(e)}")
+				file_log.info("All pre-launch tests passed successfully")
+				
+		except ImportError as e:
+			st.warning(f"⚠️ Could not import test runner: {str(e)}. Continuing without tests.")
+			file_log.warning(f"Test runner import failed: {str(e)}")
+		except Exception as e:
+			st.error(f"❌ Test execution failed: {str(e)}")
+			st.info("💡 Please check your test configuration and dependencies.")
+			file_log.error(f"Test execution failed: {str(e)}")
+			st.stop()  # Stop execution if tests fail critically
 	
 	env_loader = EnvironmentLoader()
 	defaults = env_loader.load_defaults()
@@ -1038,7 +1042,7 @@ def main():
 	# 2. Run Code button (visible when code is available) - for manual re-execution
 	with col2:
 		if 'last_code_blocks' in st.session_state and st.session_state['last_code_blocks']:
-			run_code_button = st.button("🚀 Re-Run Code", 
+			run_code_button = st.button("🚀 Run Code", 
 									  help="Manually re-execute previously generated code")
 		else:
 			run_code_button = False

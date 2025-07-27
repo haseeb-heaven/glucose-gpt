@@ -33,7 +33,7 @@ LIBRE_PRODUCT=llu.ios
         with mock.patch('streamlit.error') as mock_st_error, \
              mock.patch('streamlit.info') as mock_st_info, \
              mock.patch('os.path.exists', return_value=True), \
-             mock.patch('libreapp.examples.libre_chat.load_dotenv') as mock_load_dotenv:
+             mock.patch('glucosegpt.examples.glucose_chat.load_dotenv') as mock_load_dotenv:
             
             # Mock environment variables
             env_vars = {
@@ -48,7 +48,7 @@ LIBRE_PRODUCT=llu.ios
             
             with mock.patch('os.getenv', side_effect=lambda key, default="": env_vars.get(key, default)):
                 # Import and test
-                from libreapp.examples.libre_chat import EnvironmentLoader
+                from glucosegpt.examples.glucose_chat import EnvironmentLoader
                 
                 env_loader = EnvironmentLoader()
                 result = env_loader.load_defaults()
@@ -68,8 +68,8 @@ def test_data_formatter_integration():
     """Test DataFormatter with real pandas operations."""
     print("Testing DataFormatter integration...")
     
-    with mock.patch('libreapp.examples.libre_chat.file_log') as mock_logger:
-        from libreapp.examples.libre_chat import DataFormatter
+    with mock.patch('glucosegpt.examples.glucose_chat.file_log') as mock_logger:
+        from glucosegpt.examples.glucose_chat import DataFormatter
         
         # Test data
         sample_readings = [
@@ -116,13 +116,13 @@ def test_libre_client_manager_integration():
     """Test LibreClientManager with mocked dependencies."""
     print("Testing LibreClientManager integration...")
     
-    with mock.patch('libreapp.examples.libre_chat.file_log') as mock_logger, \
+    with mock.patch('glucosegpt.examples.glucose_chat.file_log') as mock_logger, \
          mock.patch('streamlit.toast') as mock_toast, \
-         mock.patch('libreapp.examples.libre_chat.LibreCGMClient') as mock_client_class, \
-         mock.patch('libreapp.examples.libre_chat.ApiConfig') as mock_config, \
-         mock.patch('libreapp.examples.libre_chat.DefaultDataMasker'):
+         mock.patch('glucosegpt.examples.glucose_chat.LibreCGMClient') as mock_client_class, \
+         mock.patch('glucosegpt.examples.glucose_chat.ApiConfig') as mock_config, \
+         mock.patch('glucosegpt.examples.glucose_chat.DefaultDataMasker'):
         
-        from libreapp.examples.libre_chat import LibreClientManager
+        from glucosegpt.examples.glucose_chat import LibreClientManager
         
         # Setup mock client
         mock_client = mock.Mock()
@@ -166,11 +166,11 @@ def test_ai_analyzer_integration():
     """Test AIAnalyzer with mocked LiteLLM."""
     print("Testing AIAnalyzer integration...")
     
-    with mock.patch('libreapp.examples.libre_chat.file_log') as mock_logger, \
-         mock.patch('libreapp.examples.libre_chat.litellm.completion') as mock_completion, \
-         mock.patch('libreapp.examples.libre_chat.CodeRunner') as mock_code_runner:
+    with mock.patch('glucosegpt.examples.glucose_chat.file_log') as mock_logger, \
+         mock.patch('glucosegpt.examples.glucose_chat.litellm.completion') as mock_completion, \
+         mock.patch('glucosegpt.examples.glucose_chat.CodeRunner') as mock_code_runner:
         
-        from libreapp.examples.libre_chat import AIAnalyzer
+        from glucosegpt.examples.glucose_chat import AIAnalyzer
         
         # Setup mocks
         mock_response = mock.Mock()
@@ -205,8 +205,8 @@ def test_validation_functions_integration():
     """Test validation functions."""
     print("Testing validation functions...")
     
-    with mock.patch('libreapp.examples.libre_chat.file_log'):
-        from libreapp.examples.libre_chat import validate_credentials, validate_api_keys
+    with mock.patch('glucosegpt.examples.glucose_chat.file_log'):
+        from glucosegpt.examples.glucose_chat import validate_credentials, validate_api_keys
         
         # Test credential validation
         result, message = validate_credentials("test@example.com", "password123")
@@ -233,17 +233,17 @@ def test_complete_workflow_integration():
     """Test a complete workflow from environment loading to data analysis."""
     print("Testing complete workflow integration...")
     
-    with mock.patch('libreapp.examples.libre_chat.file_log') as mock_logger, \
+    with mock.patch('glucosegpt.examples.glucose_chat.file_log') as mock_logger, \
          mock.patch('streamlit.error') as mock_st_error, \
          mock.patch('os.path.exists', return_value=True), \
-         mock.patch('libreapp.examples.libre_chat.load_dotenv'), \
+         mock.patch('glucosegpt.examples.glucose_chat.load_dotenv'), \
          mock.patch('streamlit.toast'), \
-         mock.patch('libreapp.examples.libre_chat.LibreCGMClient') as mock_client_class, \
-         mock.patch('libreapp.examples.libre_chat.ApiConfig'), \
-         mock.patch('libreapp.examples.libre_chat.DefaultDataMasker'), \
-         mock.patch('libreapp.examples.libre_chat.litellm.completion') as mock_completion:
+         mock.patch('glucosegpt.examples.glucose_chat.LibreCGMClient') as mock_client_class, \
+         mock.patch('glucosegpt.examples.glucose_chat.ApiConfig'), \
+         mock.patch('glucosegpt.examples.glucose_chat.DefaultDataMasker'), \
+         mock.patch('glucosegpt.examples.glucose_chat.litellm.completion') as mock_completion:
         
-        from libreapp.examples.libre_chat import (
+        from glucosegpt.examples.glucose_chat import (
             EnvironmentLoader, LibreClientManager, DataFormatter, AIAnalyzer
         )
         

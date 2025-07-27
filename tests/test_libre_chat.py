@@ -18,7 +18,7 @@ import xml.etree.ElementTree as ET
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Import the classes to test
-from libreapp.examples.libre_chat import (
+from glucosegpt.examples.glucose_chat import (
     EnvironmentLoader,
     LibreClientManager,
     DataFormatter,
@@ -36,7 +36,7 @@ class TestEnvironmentLoader:
         self.env_loader = EnvironmentLoader()
     
     @mock.patch('os.path.exists')
-    @mock.patch('libreapp.examples.libre_chat.load_dotenv')
+    @mock.patch('glucosegpt.examples.glucose_chat.load_dotenv')
     def test_check_env_file_exists(self, mock_load_dotenv, mock_exists):
         """Test checking for existing .env file."""
         mock_exists.return_value = True
@@ -123,9 +123,9 @@ class TestLibreClientManager:
         assert self.manager.connections == []
         assert self.manager.session_id is not None
     
-    @mock.patch('libreapp.examples.libre_chat.LibreCGMClient')
-    @mock.patch('libreapp.examples.libre_chat.ApiConfig')
-    @mock.patch('libreapp.examples.libre_chat.DefaultDataMasker')
+    @mock.patch('glucosegpt.examples.glucose_chat.LibreCGMClient')
+    @mock.patch('glucosegpt.examples.glucose_chat.ApiConfig')
+    @mock.patch('glucosegpt.examples.glucose_chat.DefaultDataMasker')
     def test_connect_success(self, mock_masker, mock_config, mock_client_class):
         """Test successful connection to LibreView."""
         # Mock the client instance
@@ -146,9 +146,9 @@ class TestLibreClientManager:
         mock_client.authenticate.assert_called_once()
         mock_client.list_connections.assert_called_once()
     
-    @mock.patch('libreapp.examples.libre_chat.LibreCGMClient')
-    @mock.patch('libreapp.examples.libre_chat.ApiConfig')
-    @mock.patch('libreapp.examples.libre_chat.DefaultDataMasker')
+    @mock.patch('glucosegpt.examples.glucose_chat.LibreCGMClient')
+    @mock.patch('glucosegpt.examples.glucose_chat.ApiConfig')
+    @mock.patch('glucosegpt.examples.glucose_chat.DefaultDataMasker')
     @mock.patch('streamlit.toast')
     def test_connect_auth_failure(self, mock_toast, mock_masker, mock_config, mock_client_class):
         """Test connection failure due to authentication."""
@@ -161,7 +161,7 @@ class TestLibreClientManager:
         assert result is False
         mock_toast.assert_called()
     
-    @mock.patch('libreapp.examples.libre_chat.LibreCGMClient')
+    @mock.patch('glucosegpt.examples.glucose_chat.LibreCGMClient')
     @mock.patch('streamlit.toast')
     def test_connect_exception(self, mock_toast, mock_client_class):
         """Test connection failure due to exception."""
@@ -379,7 +379,7 @@ class TestAIAnalyzer:
         """Test AIAnalyzer initialization."""
         assert self.analyzer.api_keys == self.api_keys
     
-    @mock.patch('libreapp.examples.libre_chat.litellm.completion')
+    @mock.patch('glucosegpt.examples.glucose_chat.litellm.completion')
     def test_fix_code_success(self, mock_completion):
         """Test successful code fixing."""
         # Mock LLM response
@@ -405,7 +405,7 @@ class TestAIAnalyzer:
         assert "fixed_blocks" in result
         mock_completion.assert_called_once()
     
-    @mock.patch('libreapp.examples.libre_chat.litellm.completion')
+    @mock.patch('glucosegpt.examples.glucose_chat.litellm.completion')
     def test_fix_code_error(self, mock_completion):
         """Test code fixing with error."""
         mock_completion.side_effect = Exception("API Error")
@@ -424,7 +424,7 @@ class TestAIAnalyzer:
         assert "No valid glucose readings found" in result["result"]
         assert result["has_code"] is False
     
-    @mock.patch('libreapp.examples.libre_chat.litellm.completion')
+    @mock.patch('glucosegpt.examples.glucose_chat.litellm.completion')
     def test_analyze_simple_query(self, mock_completion):
         """Test analysis with simple query."""
         mock_response = mock.Mock()
@@ -438,8 +438,8 @@ class TestAIAnalyzer:
         assert result["is_complex"] is False
         assert "125 mg/dL" in result["result"]
     
-    @mock.patch('libreapp.examples.libre_chat.litellm.completion')
-    @mock.patch('libreapp.examples.libre_chat.CodeRunner.run_llm_code_blocks')
+    @mock.patch('glucosegpt.examples.glucose_chat.litellm.completion')
+    @mock.patch('glucosegpt.examples.glucose_chat.CodeRunner.run_llm_code_blocks')
     def test_analyze_complex_query(self, mock_code_runner, mock_completion):
         """Test analysis with complex query that generates code."""
         # Mock LLM response with code
@@ -473,7 +473,7 @@ class TestAIAnalyzer:
         assert "code_results" in result
         mock_code_runner.assert_called_once()
     
-    @mock.patch('libreapp.examples.libre_chat.litellm.completion')
+    @mock.patch('glucosegpt.examples.glucose_chat.litellm.completion')
     def test_analyze_api_error(self, mock_completion):
         """Test analysis with API error."""
         mock_completion.side_effect = Exception("API connection failed")
@@ -530,7 +530,7 @@ class TestIntegration:
     """Integration tests that test multiple components together."""
     
     @mock.patch('os.path.exists')
-    @mock.patch('libreapp.examples.libre_chat.load_dotenv')
+    @mock.patch('glucosegpt.examples.glucose_chat.load_dotenv')
     @mock.patch('os.getenv')
     def test_environment_to_client_flow(self, mock_getenv, mock_load_dotenv, mock_exists):
         """Test the flow from environment loading to client creation."""
@@ -598,4 +598,4 @@ class TestIntegration:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--cov=libreapp.examples.libre_chat", "--cov-report=html"])
+    pytest.main([__file__, "-v", "--cov=glucosegpt.examples.glucose_chat", "--cov-report=html"])
